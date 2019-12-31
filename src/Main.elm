@@ -2,7 +2,7 @@ module Main exposing (..)
 
 import Browser
 import Html exposing (Html, button, div, input, label, text)
-import Html.Attributes exposing (placeholder, value)
+import Html.Attributes exposing (attribute, placeholder, value)
 import Html.Events exposing (onClick, onInput)
 import Result.Extra
 import Task
@@ -171,7 +171,14 @@ viewSetTimerControls timeToSetAsText setTime =
             Result.Extra.unpack markInvalid markValid
     in
     div []
-        [ input [ highlightErrorsIn setTime, placeholder "set time", value timeToSetAsText, onInput UpdateSetTimeText ] []
+        [ input
+            [ highlightErrorsIn setTime
+            , placeholder "set time"
+            , value timeToSetAsText
+            , onInput UpdateSetTimeText
+            , attribute "aria-label" "Time to count down"
+            ]
+            []
         , label [] [ text (formatTypedTimeResult setTime) ]
         , button [ onClick SetRemainingTime ] [ text "set" ]
         ]
