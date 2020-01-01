@@ -1,15 +1,15 @@
 module TimerEngineTests exposing (allTests)
 
 import Expect
-import Fuzz exposing (..)
-import Test exposing (..)
-import Timer exposing (..)
+import Fuzz exposing (intRange)
+import Test exposing (Test, describe, fuzz, test)
+import Timer exposing (Timer, expiredTimer, tick, timeRemainingInSeconds)
 import TypedTime
 
 
 newActiveTimerSetInSecondsAsInt : Int -> Timer
 newActiveTimerSetInSecondsAsInt =
-    toFloat >> TypedTime.seconds >> activeTimerSetTo
+    toFloat >> TypedTime.seconds >> Timer.ActiveTimer
 
 
 allTests : Test

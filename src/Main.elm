@@ -15,21 +15,17 @@ main =
     Browser.element { init = init, update = update, view = view, subscriptions = subscriptions }
 
 
-type TimerState
-    = Running
-    | Frozen -- REFACTOR ExpiredTimer implies Frozen, so combine these somehow?
-
-
 type alias Model =
-    -- REFACTOR Move 'timer state' onto the Timer object in order to keep View Model and Domain Model separate.
-    { timer : Timer, timerState : TimerState, timeToSetAsText : String }
+    { timer : Timer
+    , timeToSetAsText : String
+    }
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
     let
         newModel =
-            { timer = Timer.activeTimerSetTo (minutes 10), timeToSetAsText = "", timerState = Frozen }
+            { timer = Timer.stoppedTimerSetTo (minutes 10), timeToSetAsText = "" }
     in
     ( newModel, Cmd.none )
 
@@ -98,7 +94,7 @@ setTimeRemaining : Model -> ( Model, Cmd Msg )
 setTimeRemaining model =
     case timeToSet model of
         Ok newTime ->
-            ( { model | timer = Timer.activeTimerSetTo newTime }
+            ( { model | timer = Timer.stoppedTimerSetTo newTime }
             , Task.perform (always Stop) (Task.succeed 0)
             )
 
@@ -107,24 +103,15 @@ setTimeRemaining model =
 
 
 setTimerRunning model on =
-    let
-        newTimerState =
-            if on then
-                Running
+    case ( model.timer, on ) of
+        ( ActiveTimer remainingTime, False ) ->
+            ( { model | timer = StoppedTimer remainingTime }, Cmd.none )
 
-            else
-                Frozen
+        ( StoppedTimer remainingTime, True ) ->
+            ( { model | timer = ActiveTimer remainingTime }, Cmd.none )
 
-        newModel =
-            case model.timer of
-                ActiveTimer _ ->
-                    { model | timerState = newTimerState }
-
-                ExpiredTimer ->
-                    -- SMELL Expired implies Frozen. I'd like to make this more explicit!
-                    { model | timerState = Frozen }
-    in
-    ( newModel, Cmd.none )
+        ( _, _ ) ->
+            ( model, Cmd.none )
 
 
 startTimer model =
@@ -137,11 +124,11 @@ stopTimer model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    case model.timerState of
-        Running ->
+    case model.timer of
+        ActiveTimer _ ->
             Time.every 1000 (always Tick)
 
-        Frozen ->
+        _ ->
             Sub.none
 
 
