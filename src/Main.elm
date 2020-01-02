@@ -25,7 +25,7 @@ init _ =
     let
         initTimer =
             -- REFACTOR Move this into the Domain Model
-            PausedTimer (minutes 10)
+            ActiveTimer True (minutes 10)
 
         newModel =
             { timer = initTimer, timeToSetAsText = "" }
@@ -97,21 +97,18 @@ setTimeRemaining : Model -> ( Model, Cmd Msg )
 setTimeRemaining model =
     case timeToSet model of
         Ok newTime ->
-            ( { model | timer = ActiveTimer newTime }
+            ( { model | timer = ActiveTimer True newTime }
             , Task.perform (always Stop) (Task.succeed 0)
             )
 
-        Err unparsableText ->
+        Err _ ->
             ( model, Cmd.none )
 
 
 setTimerRunning model running =
-    case ( model.timer, running ) of
-        ( PausedTimer timeRemaining, True ) ->
-            { model | timer = ActiveTimer timeRemaining }
-
-        ( ActiveTimer timeRemaining, False ) ->
-            { model | timer = PausedTimer timeRemaining }
+    case model.timer of
+        ActiveTimer _ timeRemaining ->
+            { model | timer = ActiveTimer (not running) timeRemaining }
 
         _ ->
             model
@@ -120,7 +117,7 @@ setTimerRunning model running =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     case model.timer of
-        ActiveTimer _ ->
+        ActiveTimer False _ ->
             Time.every 1000 (always Tick)
 
         _ ->

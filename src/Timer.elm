@@ -1,6 +1,5 @@
 module Timer exposing
     ( Timer(..)
-    , expiredTimer
     , tick
     , timeRemainingInSeconds
     )
@@ -9,24 +8,18 @@ import TypedTime exposing (TypedTime, seconds)
 
 
 type Timer
-    = ActiveTimer TypedTime
-    | PausedTimer TypedTime
+    = ActiveTimer Bool TypedTime
     | ExpiredTimer
 
 
-expiredTimer : Timer
-expiredTimer =
-    ExpiredTimer
-
-
-tickTimer : (TypedTime -> Timer) -> TypedTime -> Timer
-tickTimer timerConstructor timeRemaining =
+tickTimer : Bool -> TypedTime -> Timer
+tickTimer paused timeRemaining =
     let
         newTimeRemaining =
             TypedTime.sub timeRemaining (seconds 1)
     in
     if TypedTime.gt newTimeRemaining (seconds 0) then
-        timerConstructor newTimeRemaining
+        ActiveTimer paused newTimeRemaining
 
     else
         ExpiredTimer
@@ -35,23 +28,17 @@ tickTimer timerConstructor timeRemaining =
 tick : Timer -> Timer
 tick timer =
     case timer of
-        ActiveTimer timeRemaining ->
-            tickTimer ActiveTimer timeRemaining
-
-        PausedTimer timeRemaining ->
-            tickTimer PausedTimer timeRemaining
-
-        _ ->
+        ExpiredTimer ->
             timer
+
+        ActiveTimer paused timeRemaining ->
+            tickTimer paused timeRemaining
 
 
 timeRemainingInSeconds : Timer -> Int
 timeRemainingInSeconds timer =
     case timer of
-        PausedTimer timeRemaining ->
-            TypedTime.toSeconds timeRemaining |> floor
-
-        ActiveTimer timeRemaining ->
+        ActiveTimer _ timeRemaining ->
             TypedTime.toSeconds timeRemaining |> floor
 
         _ ->

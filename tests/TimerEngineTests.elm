@@ -14,7 +14,7 @@ secondsFromInt =
 
 newActiveTimerSetInSecondsAsInt : Int -> Timer
 newActiveTimerSetInSecondsAsInt =
-    secondsFromInt >> ActiveTimer
+    secondsFromInt >> ActiveTimer False
 
 
 allTests : Test
@@ -29,7 +29,7 @@ allTests =
                         |> Expect.equal (startTimeInSecondsAsInt - 1)
             , test "expired timer doesn't tick" <|
                 \() ->
-                    expiredTimer
+                    ExpiredTimer
                         |> tick
                         |> timeRemainingInSeconds
                         |> Expect.equal 0
